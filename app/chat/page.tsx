@@ -212,7 +212,7 @@ export default function ChatPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-hub-charcoal">
       <div className="h-[80vh] rounded-3xl bg-white dark:bg-[#27322B] border border-hub-border shadow-xl flex overflow-hidden">
         {/* LEFT SIDEBAR: CONVERSATION LIST */}
-        <div className="w-full md:w-80 border-r border-hub-border flex flex-col justify-between bg-hub-ivory dark:bg-[#18201C]">
+        <div className={`w-full md:w-80 border-r border-hub-border flex-col justify-between bg-hub-ivory dark:bg-[#18201C] ${activeConvId ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-hub-border flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-hub-terracotta" />
@@ -235,36 +235,37 @@ export default function ChatPage() {
                   onClick={() => setIsNewChatOpen(true)}
                   className="px-3 py-1.5 rounded-xl bg-hub-stone text-hub-charcoal font-semibold"
                 >
-                  Find People to Message
+                  Start New Chat
                 </button>
               </div>
             ) : (
               conversations.map((c) => {
-                const partner = c.participants?.find((p: any) => p.user?.id !== currentUser?.id)?.user || c.participants?.[0]?.user;
+                const partner = c.participants?.find((p: any) => p.user?.id !== currentUser?.id)?.user;
                 const lastMsg = c.messages?.[0];
+                const isSelected = c.id === activeConvId;
                 return (
                   <button
                     key={c.id}
                     onClick={() => setActiveConvId(c.id)}
-                    className={`w-full p-3 rounded-2xl text-left flex items-center gap-3 transition-all ${
-                      activeConvId === c.id
-                        ? 'bg-hub-cream dark:bg-[#27322B] border border-hub-terracotta/40 shadow-xs'
+                    className={`w-full p-3 rounded-2xl flex items-center gap-3 text-left transition-all min-h-[56px] ${
+                      isSelected
+                        ? 'bg-hub-terracotta text-white font-semibold shadow-xs'
                         : 'hover:bg-hub-stone text-hub-charcoal'
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-hub-terracotta text-white font-bold flex items-center justify-center text-sm border border-hub-border flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-hub-terracotta/20 text-hub-terracotta font-bold flex items-center justify-center text-sm flex-shrink-0">
                       {partner?.name?.charAt(0) || 'U'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-xs text-hub-charcoal truncate">{partner?.name || 'Member'}</span>
                         {lastMsg && (
-                          <span className="text-[10px] text-hub-sage font-mono">
+                          <span className="text-[10px] font-mono opacity-70">
                             {new Date(lastMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-hub-sage truncate">
+                      <p className={`text-[11px] truncate ${isSelected ? 'text-white/80' : 'text-hub-sage'}`}>
                         {lastMsg ? lastMsg.content || '📷 Media Attachment' : `Roots in ${partner?.profile?.hometownCity || 'Hometown'}`}
                       </p>
                     </div>
@@ -276,12 +277,19 @@ export default function ChatPage() {
         </div>
 
         {/* RIGHT MAIN WINDOW: ACTIVE CHAT */}
-        <div className="flex-1 flex flex-col justify-between bg-white dark:bg-[#27322B]">
+        <div className={`flex-1 flex-col justify-between bg-white dark:bg-[#27322B] ${!activeConvId ? 'hidden md:flex' : 'flex'}`}>
           {activeConv ? (
             <>
               {/* CHAT HEADER */}
               <div className="p-4 border-b border-hub-border flex items-center justify-between bg-hub-cream dark:bg-[#202A24]">
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setActiveConvId(null)}
+                    className="md:hidden p-1.5 rounded-lg bg-hub-stone text-hub-charcoal hover:bg-hub-border"
+                    title="Back to Conversations"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
                   <div className="w-9 h-9 rounded-full bg-hub-terracotta text-white font-bold flex items-center justify-center text-sm">
                     {activeConv.participants?.find((p: any) => p.user?.id !== currentUser?.id)?.user?.name?.charAt(0) || 'U'}
                   </div>

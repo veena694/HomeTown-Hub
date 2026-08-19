@@ -334,7 +334,7 @@ export default function HometownScene() {
 
   if (!isMounted) {
     return (
-      <div className="w-full h-[520px] rounded-3xl bg-hub-cream border border-hub-border flex items-center justify-center text-hub-sage">
+      <div className="w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-3xl bg-hub-cream border border-hub-border flex items-center justify-center text-hub-sage">
         <div className="flex items-center gap-2.5 text-sm font-medium">
           <Compass className="w-5 h-5 text-hub-terracotta animate-spin" />
           <span>Crafting 3D Hometown Diorama...</span>
@@ -360,7 +360,7 @@ export default function HometownScene() {
 
   return (
     <div id="3d-diorama-section" className="space-y-4">
-      <div className="relative w-full h-[520px] rounded-3xl overflow-hidden bg-gradient-to-b from-[#E2F1F8] via-hub-cream to-[#F4EFE6] dark:from-[#202A24] dark:via-[#18201C] dark:to-[#27322B] border border-hub-border shadow-md">
+      <div className="relative w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-3xl overflow-hidden bg-gradient-to-b from-[#E2F1F8] via-hub-cream to-[#F4EFE6] dark:from-[#202A24] dark:via-[#18201C] dark:to-[#27322B] border border-hub-border shadow-md">
         <Canvas camera={{ position: [0, 5, 8], fov: 45 }}>
           <HometownSceneContent
             landmarks={realLandmarks}

@@ -269,7 +269,7 @@ export default function MemoryMapInner({ initialMemories, communitySlug }: Props
         </div>
       </div>
 
-      <div className="relative w-full h-[540px] rounded-3xl overflow-hidden border border-hub-border shadow-sm z-0">
+      <div className="relative w-full h-[380px] sm:h-[460px] md:h-[540px] rounded-3xl overflow-hidden border border-hub-border shadow-sm z-0">
         <MapContainer
           center={[centerLat, centerLng]}
           zoom={13}
