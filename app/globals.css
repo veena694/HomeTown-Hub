@@ -1,0 +1,117 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+:root {
+  --background: #FFFDF7;
+  --background-secondary: #FFF8ED;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --foreground: #2F3A32;
+  --foreground-secondary: #68736B;
+  --muted: #8A948C;
+  --border: #EDE7DC;
+
+  --primary: #E8754F;
+  --primary-hover: #D96340;
+  --marigold: #F3B562;
+  --sage: #78A88B;
+  --sky: #8FB8D8;
+  --dusty-rose: #C99BB5;
+}
+
+.dark {
+  --background: #18201C;
+  --background-secondary: #202A24;
+  --surface: #27322B;
+  --surface-elevated: #303C34;
+  --foreground: #FFF8ED;
+  --foreground-secondary: #C9D0C9;
+  --muted: #9BA79D;
+  --border: #3B473F;
+
+  --primary: #F07A57;
+  --primary-hover: #E86641;
+  --marigold: #F3B562;
+  --sage: #8FBD9E;
+  --sky: #91BDD8;
+  --dusty-rose: #CDA2BA;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'DM Sans', sans-serif;
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+.dark body {
+  background-color: #18201C;
+  color: #FFF8ED;
+}
+
+.dark .bg-white {
+  background-color: #27322B !important;
+  color: #FFF8ED !important;
+}
+
+.dark .bg-hub-cream {
+  background-color: #202A24 !important;
+}
+
+.dark .bg-hub-ivory {
+  background-color: #18201C !important;
+}
+
+.dark .bg-hub-stone {
+  background-color: #303C34 !important;
+}
+
+.dark .border-hub-border {
+  border-color: #3B473F !important;
+}
+
+.dark .text-hub-charcoal {
+  color: #FFF8ED !important;
+}
+
+.dark .text-hub-sage {
+  color: #C9D0C9 !important;
+}
+
+.dark .bg-white\/90 {
+  background-color: rgba(39, 50, 43, 0.9) !important;
+}
+
+.dark .bg-white\/95 {
+  background-color: rgba(39, 50, 43, 0.95) !important;
+}
+
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Custom Leaflet Paper Popup Styling */
+.leaflet-popup-content-wrapper {
+  background-color: #FFFDF7 !important;
+  color: #2F3A32 !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 10px 25px -5px rgba(47, 58, 50, 0.1) !important;
+  border: 1px solid #EDE7DC !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background-color: #27322B !important;
+  color: #FFF8ED !important;
+  border-color: #3B473F !important;
+}
+
+.leaflet-popup-tip {
+  background-color: #FFFDF7 !important;
+}
+
+.dark .leaflet-popup-tip {
+  background-color: #27322B !important;
+}
