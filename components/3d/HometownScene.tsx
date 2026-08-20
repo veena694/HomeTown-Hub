@@ -1,13 +1,10 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Float, Html, Sparkles } from '@react-three/drei';
-import * as THREE from 'three';
-import WebGLFallback from './WebGLFallback';
-import { MapPin, Sparkles as SparklesIcon, X, Compass, BookOpen, Calendar, ArrowLeft, Share2, Layers, Heart } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Html, Float } from '@react-three/drei';
+import { MapPin, Compass, Sparkles, AlertCircle, Share2, Layers, RotateCcw } from 'lucide-react';
 import { useLocationContext, PlaceData } from '@/lib/LocationContext';
-import Link from 'next/link';
 
 interface LandmarkData {
   id: string;
@@ -19,109 +16,44 @@ interface LandmarkData {
   color: string;
 }
 
-// 3D Miniature Model Components
-function PalaceMiniature({ color = '#E8754F' }: { color?: string }) {
+// -------------------------------------------------------------
+// LOW-POLY PROCEDURAL MINIATURE MODELS
+// -------------------------------------------------------------
+
+function GroundBase() {
   return (
-    <group position={[0, 0.2, 0]}>
-      {/* Base Palace Layer */}
-      <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.8, 1.0, 1.2]} />
-        <meshStandardMaterial color="#FFF8ED" roughness={0.3} />
+    <group>
+      <mesh position={[0, -0.2, 0]} receiveShadow>
+        <cylinderGeometry args={[6, 6.2, 0.4, 32]} />
+        <meshStandardMaterial color="#88B04B" roughness={0.8} />
       </mesh>
-      {/* Central Dome */}
-      <mesh position={[0, 1.3, 0]}>
-        <sphereGeometry args={[0.45, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={color} roughness={0.2} metalness={0.1} />
-      </mesh>
-      {/* Side Domes */}
-      <mesh position={[-0.7, 1.1, 0]}>
-        <sphereGeometry args={[0.25, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={color} roughness={0.3} />
-      </mesh>
-      <mesh position={[0.7, 1.1, 0]}>
-        <sphereGeometry args={[0.25, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={color} roughness={0.3} />
+      <mesh position={[0, -0.45, 0]}>
+        <cylinderGeometry args={[6.2, 6.4, 0.1, 32]} />
+        <meshStandardMaterial color="#D9A05B" roughness={0.9} />
       </mesh>
     </group>
   );
 }
 
-function FortMiniature() {
+function River() {
   return (
-    <group position={[0, 0.2, 0]}>
-      {/* Fort Outer Walls */}
-      <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2.2, 0.8, 2.2]} />
-        <meshStandardMaterial color="#D45D36" roughness={0.7} />
-      </mesh>
-      {/* Corner Watchtowers */}
-      <mesh position={[-0.9, 0.9, -0.9]}>
-        <cylinderGeometry args={[0.22, 0.25, 0.6, 8]} />
-        <meshStandardMaterial color="#B84924" />
-      </mesh>
-      <mesh position={[0.9, 0.9, -0.9]}>
-        <cylinderGeometry args={[0.22, 0.25, 0.6, 8]} />
-        <meshStandardMaterial color="#B84924" />
-      </mesh>
-      <mesh position={[-0.9, 0.9, 0.9]}>
-        <cylinderGeometry args={[0.22, 0.25, 0.6, 8]} />
-        <meshStandardMaterial color="#B84924" />
-      </mesh>
-      <mesh position={[0.9, 0.9, 0.9]}>
-        <cylinderGeometry args={[0.22, 0.25, 0.6, 8]} />
-        <meshStandardMaterial color="#B84924" />
-      </mesh>
-    </group>
+    <mesh position={[0, -0.19, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[12, 1.8]} />
+      <meshStandardMaterial color="#4A90E2" roughness={0.2} metalness={0.1} transparent opacity={0.85} />
+    </mesh>
   );
 }
 
-function TempleMiniature() {
-  return (
-    <group position={[0, 0.2, 0]}>
-      {/* Main Temple Shikhara Tower */}
-      <mesh position={[0, 0.9, 0]} castShadow>
-        <coneGeometry args={[0.65, 1.4, 4]} />
-        <meshStandardMaterial color="#F3B562" roughness={0.3} />
-      </mesh>
-      {/* Temple Base */}
-      <mesh position={[0, 0.2, 0]}>
-        <boxGeometry args={[1.4, 0.4, 1.4]} />
-        <meshStandardMaterial color="#FFF8ED" />
-      </mesh>
-      {/* Kalash Top */}
-      <mesh position={[0, 1.7, 0]}>
-        <sphereGeometry args={[0.12, 8, 8]} />
-        <meshStandardMaterial color="#E8754F" />
-      </mesh>
-    </group>
-  );
-}
-
-function GenericMiniature({ color = '#8FB8D8' }: { color?: string }) {
-  return (
-    <group position={[0, 0.2, 0]}>
-      <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.2, 1.0, 1.2]} />
-        <meshStandardMaterial color="#FFF8ED" roughness={0.4} />
-      </mesh>
-      <mesh position={[0, 1.1, 0]}>
-        <coneGeometry args={[0.85, 0.6, 4]} />
-        <meshStandardMaterial color={color} roughness={0.3} />
-      </mesh>
-    </group>
-  );
-}
-
-function House({ position, color = '#F4EFE6', roofColor = '#E8754F' }: { position: [number, number, number]; color?: string; roofColor?: string }) {
+function House({ position, color = '#FFF8ED', roofColor = '#E8754F' }: { position: [number, number, number]; color?: string; roofColor?: string }) {
   return (
     <group position={position}>
-      <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.85, 0.8, 0.85]} />
-        <meshStandardMaterial color={color} roughness={0.4} />
+      <mesh position={[0, 0.35, 0]} castShadow>
+        <boxGeometry args={[0.7, 0.7, 0.7]} />
+        <meshStandardMaterial color={color} />
       </mesh>
-      <mesh position={[0, 1.0, 0]} rotation={[0, Math.PI / 4, 0]}>
-        <coneGeometry args={[0.75, 0.55, 4]} />
-        <meshStandardMaterial color={roofColor} roughness={0.3} />
+      <mesh position={[0, 0.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+        <coneGeometry args={[0.6, 0.5, 4]} />
+        <meshStandardMaterial color={roofColor} />
       </mesh>
     </group>
   );
@@ -130,79 +62,113 @@ function House({ position, color = '#F4EFE6', roofColor = '#E8754F' }: { positio
 function Tree({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[0.06, 0.09, 0.6, 6]} />
-        <meshStandardMaterial color="#8C6D58" />
+      <mesh position={[0, 0.25, 0]} castShadow>
+        <cylinderGeometry args={[0.06, 0.08, 0.5, 8]} />
+        <meshStandardMaterial color="#5C4033" />
       </mesh>
-      <mesh position={[0, 0.8, 0]}>
-        <dodecahedronGeometry args={[0.38, 1]} />
-        <meshStandardMaterial color="#78A88B" roughness={0.5} />
+      <mesh position={[0, 0.7, 0]} castShadow>
+        <dodecahedronGeometry args={[0.35, 1]} />
+        <meshStandardMaterial color="#78A88B" roughness={0.7} />
       </mesh>
     </group>
   );
 }
 
-function InteractiveLandmark({
-  data,
-  onSelect,
-}: {
-  data: LandmarkData;
-  onSelect: (lm: LandmarkData) => void;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [hovered, setHovered] = useState(false);
-
-  useFrame(({ clock }) => {
-    if (meshRef.current) {
-      meshRef.current.position.y = data.position[1] + Math.sin(clock.getElapsedTime() * 2) * 0.08 + (hovered ? 0.2 : 0);
-    }
-  });
-
+// Category-Specific Place Miniatures
+function FortMiniature({ color = '#D97706' }: { color?: string }) {
   return (
-    <group position={data.position}>
-      <mesh
-        ref={meshRef}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-        onClick={() => onSelect(data)}
-      >
-        <octahedronGeometry args={[0.38]} />
-        <meshStandardMaterial
-          color={hovered ? '#E8754F' : data.color}
-          emissive={data.color}
-          emissiveIntensity={hovered ? 0.8 : 0.3}
-          roughness={0.2}
-        />
+    <group position={[0, 0.8, 0]}>
+      <mesh castShadow position={[0, 0, 0]}>
+        <boxGeometry args={[2.5, 1.2, 1.8]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
+      {[-1.1, 1.1].map((x, idx) => (
+        <group key={idx} position={[x, 0.4, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.45, 0.45, 1.6, 12]} />
+            <meshStandardMaterial color="#B45309" />
+          </mesh>
+          <mesh position={[0, 1.0, 0]}>
+            <coneGeometry args={[0.5, 0.6, 12]} />
+            <meshStandardMaterial color="#7C2D12" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
 
-      <Html position={[0, 0.75, 0]} center distanceFactor={10}>
-        <div
-          onClick={() => onSelect(data)}
-          className={`cursor-pointer transition-all duration-300 transform ${
-            hovered ? 'scale-110 shadow-lg' : 'scale-100'
-          } px-3 py-1 rounded-full bg-white/90 dark:bg-[#27322B]/90 border ${
-            hovered ? 'border-hub-terracotta text-hub-terracotta' : 'border-hub-border text-hub-charcoal'
-          } text-[11px] font-semibold whitespace-nowrap backdrop-blur-md flex items-center gap-1.5 shadow-sm`}
+function TempleMiniature({ color = '#E8754F' }: { color?: string }) {
+  return (
+    <group position={[0, 0.6, 0]}>
+      <mesh castShadow position={[0, 0.4, 0]}>
+        <boxGeometry args={[1.6, 0.8, 1.6]} />
+        <meshStandardMaterial color="#FFF8ED" />
+      </mesh>
+      <mesh castShadow position={[0, 1.2, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[0.9, 1.4, 4]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <mesh position={[0, 2.0, 0]}>
+        <sphereGeometry args={[0.15, 12, 12]} />
+        <meshStandardMaterial color="#F59E0B" metalness={0.8} roughness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+function PalaceMiniature({ color = '#F59E0B' }: { color?: string }) {
+  return (
+    <group position={[0, 0.7, 0]}>
+      <mesh castShadow position={[0, 0.5, 0]}>
+        <boxGeometry args={[2.8, 1.0, 1.5]} />
+        <meshStandardMaterial color="#FDF6E2" />
+      </mesh>
+      {[-1.0, 0, 1.0].map((x, i) => (
+        <mesh key={i} castShadow position={[x, 1.2, 0]}>
+          <sphereGeometry args={[0.4, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.7]} />
+          <meshStandardMaterial color={color} metalness={0.4} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function GenericMiniature({ color = '#78A88B' }: { color?: string }) {
+  return (
+    <group position={[0, 0.7, 0]}>
+      <mesh castShadow position={[0, 0.5, 0]}>
+        <boxGeometry args={[1.8, 1.0, 1.4]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <mesh position={[0, 1.2, 0]}>
+        <octahedronGeometry args={[0.6]} />
+        <meshStandardMaterial color="#FFF" roughness={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function LandmarkBuilding({ landmark, onSelect }: { landmark: LandmarkData; onSelect: () => void }) {
+  return (
+    <group position={landmark.position} onClick={onSelect}>
+      <mesh castShadow position={[0, 0.5, 0]}>
+        <boxGeometry args={[0.9, 1.0, 0.9]} />
+        <meshStandardMaterial color={landmark.color} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 1.2, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[0.65, 0.7, 4]} />
+        <meshStandardMaterial color="#FFF8ED" />
+      </mesh>
+      <Html position={[0, 1.8, 0]} center distanceFactor={10}>
+        <button
+          onClick={onSelect}
+          className="px-2.5 py-1 rounded-full bg-white/95 dark:bg-[#27322B]/95 text-hub-charcoal border border-hub-terracotta/40 font-bold text-[10px] shadow-md hover:bg-hub-terracotta hover:text-white transition-all whitespace-nowrap flex items-center gap-1 min-h-[32px]"
         >
-          <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: data.color }} />
-          {data.name}
-        </div>
+          <MapPin className="w-3 h-3 text-hub-terracotta" />
+          <span>{landmark.name}</span>
+        </button>
       </Html>
-    </group>
-  );
-}
-
-function DioramaBaseTable() {
-  return (
-    <group>
-      <mesh position={[0, -0.4, 0]} receiveShadow>
-        <cylinderGeometry args={[5.8, 6.2, 0.4, 32]} />
-        <meshStandardMaterial color="#E6DFD3" roughness={0.6} />
-      </mesh>
-      <mesh position={[0, -0.18, 0]} receiveShadow>
-        <cylinderGeometry args={[5.6, 5.6, 0.04, 32]} />
-        <meshStandardMaterial color="#EBF4EC" roughness={0.8} />
-      </mesh>
     </group>
   );
 }
@@ -216,75 +182,96 @@ function HometownSceneContent({
   selectedPlace: PlaceData | null;
   onSelectLandmark: (lm: LandmarkData) => void;
 }) {
-  const cat = selectedPlace?.category?.toLowerCase() || '';
-
   return (
     <>
-      <ambientLight intensity={1.2} />
-      <directionalLight position={[10, 20, 10]} intensity={1.8} castShadow />
-      <pointLight position={[0, 5, 0]} intensity={1.2} color="#F3B562" />
-      <Sparkles count={40} scale={8} size={3} speed={0.4} color="#F3B562" />
+      <ambientLight intensity={0.9} />
+      <directionalLight position={[10, 15, 10]} intensity={1.3} castShadow shadow-mapSize={[1024, 1024]} />
+      <directionalLight position={[-10, 10, -5]} intensity={0.4} color="#B4C6E7" />
 
-      <Float speed={1.2} rotationIntensity={0.05} floatIntensity={0.2}>
-        <DioramaBaseTable />
+      <GroundBase />
+      <River />
 
-        {selectedPlace ? (
-          /* Render Selected Place Focused 3D Miniature Model */
-          <group position={[0, 0, 0]}>
-            {cat.includes('fort') || cat.includes('castle') ? (
-              <FortMiniature />
-            ) : cat.includes('palace') ? (
-              <PalaceMiniature />
-            ) : cat.includes('temple') || cat.includes('mandir') ? (
-              <TempleMiniature />
-            ) : (
-              <GenericMiniature color={selectedPlace.category === 'HERITAGE' ? '#E8754F' : '#F3B562'} />
-            )}
+      {selectedPlace ? (
+        /* Render Focused Place Miniature */
+        <group>
+          {selectedPlace.category?.includes('FORT') || selectedPlace.name?.toLowerCase().includes('fort') ? (
+            <FortMiniature color="#D97706" />
+          ) : selectedPlace.category?.includes('PALACE') || selectedPlace.name?.toLowerCase().includes('palace') ? (
+            <PalaceMiniature color="#F59E0B" />
+          ) : selectedPlace.category?.includes('TEMPLE') || selectedPlace.name?.toLowerCase().includes('mandir') ? (
+            <TempleMiniature color="#E8754F" />
+          ) : (
+            <GenericMiniature color={selectedPlace.category === 'HERITAGE' ? '#E8754F' : '#F3B562'} />
+          )}
 
-            <House position={[-2.2, 0, 1.5]} color="#FFF8ED" roofColor="#E8754F" />
-            <House position={[2.2, 0, 1.5]} color="#F4EFE6" roofColor="#78A88B" />
-            <Tree position={[-1.5, 0, -1.8]} />
-            <Tree position={[1.8, 0, -1.8]} />
+          <House position={[-2.2, 0, 1.5]} color="#FFF8ED" roofColor="#E8754F" />
+          <House position={[2.2, 0, 1.5]} color="#F4EFE6" roofColor="#78A88B" />
+          <Tree position={[-1.5, 0, -1.8]} />
+          <Tree position={[1.8, 0, -1.8]} />
 
-            <Html position={[0, 2.2, 0]} center distanceFactor={8}>
-              <div className="px-4 py-1.5 rounded-full bg-hub-terracotta text-white font-bold text-xs shadow-lg flex items-center gap-1.5 animate-bounce">
-                <MapPin className="w-4 h-4" />
-                <span>{selectedPlace.name}</span>
-              </div>
-            </Html>
-          </group>
-        ) : (
-          /* Render City-Level Overview Diorama */
-          <group>
-            <House position={[-1.8, 0, 1.8]} color="#FFF8ED" roofColor="#E8754F" />
-            <House position={[1.8, 0, 1.8]} color="#F4EFE6" roofColor="#78A88B" />
-            <House position={[-2.2, 0, -1.8]} color="#FFF8ED" roofColor="#8FB8D8" />
-            <House position={[2.1, 0, 2.1]} color="#F4EFE6" roofColor="#F3B562" />
-            <House position={[0, 0, -2.5]} color="#FFF8ED" roofColor="#C99BB5" />
+          <Html position={[0, 2.2, 0]} center distanceFactor={8}>
+            <div className="px-4 py-1.5 rounded-full bg-hub-terracotta text-white font-bold text-xs shadow-lg flex items-center gap-1.5 animate-bounce">
+              <MapPin className="w-4 h-4" />
+              <span>{selectedPlace.name}</span>
+            </div>
+          </Html>
+        </group>
+      ) : (
+        /* Render City-Level Overview Diorama */
+        <group>
+          <House position={[-1.8, 0, 1.8]} color="#FFF8ED" roofColor="#E8754F" />
+          <House position={[1.8, 0, 1.8]} color="#F4EFE6" roofColor="#78A88B" />
+          <Tree position={[-2.5, 0, -1.2]} />
+          <Tree position={[2.5, 0, 1.2]} />
 
-            <Tree position={[-1.0, 0, 2.2]} />
-            <Tree position={[1.2, 0, -2.1]} />
-            <Tree position={[-2.8, 0, 0.2]} />
-            <Tree position={[2.7, 0, 0.5]} />
+          {landmarks.map((lm) => (
+            <LandmarkBuilding key={lm.id} landmark={lm} onSelect={() => onSelectLandmark(lm)} />
+          ))}
+        </group>
+      )}
 
-            {landmarks.map((lm) => (
-              <InteractiveLandmark key={lm.id} data={lm} onSelect={onSelectLandmark} />
-            ))}
-          </group>
-        )}
-      </Float>
-
-      <OrbitControls enableZoom={true} autoRotate autoRotateSpeed={0.6} maxPolarAngle={Math.PI / 2.2} minPolarAngle={Math.PI / 4} />
+      <OrbitControls
+        enablePan={false}
+        enableZoom={true}
+        minDistance={5}
+        maxDistance={12}
+        minPolarAngle={Math.PI / 6}
+        maxPolarAngle={Math.PI / 2.5}
+        autoRotate={!selectedPlace}
+        autoRotateSpeed={0.8}
+      />
     </>
   );
 }
 
+function WebGLFallback() {
+  const { currentLocation } = useLocationContext();
+  const cityName = currentLocation?.city || 'Hometown';
+
+  return (
+    <div className="w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-3xl bg-hub-cream border border-hub-border p-6 flex flex-col items-center justify-center text-center space-y-4 text-hub-charcoal">
+      <div className="w-16 h-16 rounded-3xl bg-hub-terracotta/10 text-hub-terracotta flex items-center justify-center font-bold">
+        <Compass className="w-8 h-8 animate-spin" />
+      </div>
+      <div>
+        <h3 className="font-display font-bold text-xl">{cityName} Hometown Diorama</h3>
+        <p className="text-xs text-hub-sage max-w-sm mt-1">
+          Interactive 3D WebGL preview unavailable. Exploring real OpenStreetMap landmark details for {cityName}.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function HometownScene() {
+  const { currentLocation, selectedPlace, setSelectedPlace } = useLocationContext();
   const [isMounted, setIsMounted] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
-  const [selectedLandmark, setSelectedLandmark] = useState<LandmarkData | null>(null);
   const [realLandmarks, setRealLandmarks] = useState<LandmarkData[]>([]);
-  const { currentLocation, selectedPlace, setSelectedPlace } = useLocationContext();
+  const [selectedLandmark, setSelectedLandmark] = useState<LandmarkData | null>(null);
+  const [isLoadingPoi, setIsLoadingPoi] = useState(false);
+
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     setIsMounted(true);
@@ -297,14 +284,27 @@ export default function HometownScene() {
     }
   }, []);
 
+  // DE-RACER POI FETCHING WITH ABORT CONTROLLER & REQUEST ID VERIFICATION
   useEffect(() => {
     if (!currentLocation) return;
+
+    const currentReqId = ++requestIdRef.current;
+    const controller = new AbortController();
+
+    setIsLoadingPoi(true);
+    setRealLandmarks([]); // Clear old landmarks immediately on city change
+
     const lat = currentLocation.latitude || 29.3909;
     const lng = currentLocation.longitude || 76.9635;
 
-    fetch(`/api/locations/nearby-places?lat=${lat}&lng=${lng}&limit=4`)
+    fetch(`/api/locations/nearby-places?lat=${lat}&lng=${lng}&limit=4`, {
+      signal: controller.signal,
+    })
       .then((res) => res.json())
       .then((data) => {
+        // IGNORE STALE RESPONSES IF ANOTHER REQUEST WAS LAUNCHED
+        if (currentReqId !== requestIdRef.current) return;
+
         if (data.places && data.places.length > 0) {
           const colors = ['#E8754F', '#F3B562', '#78A88B', '#8FB8D8'];
           const positions: [number, number, number][] = [
@@ -329,7 +329,20 @@ export default function HometownScene() {
           setRealLandmarks([]);
         }
       })
-      .catch(() => setRealLandmarks([]));
+      .catch((err) => {
+        if (err.name !== 'AbortError' && currentReqId === requestIdRef.current) {
+          setRealLandmarks([]);
+        }
+      })
+      .finally(() => {
+        if (currentReqId === requestIdRef.current) {
+          setIsLoadingPoi(false);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
   }, [currentLocation]);
 
   if (!isMounted) {
@@ -337,7 +350,7 @@ export default function HometownScene() {
       <div className="w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-3xl bg-hub-cream border border-hub-border flex items-center justify-center text-hub-sage">
         <div className="flex items-center gap-2.5 text-sm font-medium">
           <Compass className="w-5 h-5 text-hub-terracotta animate-spin" />
-          <span>Crafting 3D Hometown Diorama...</span>
+          <span>Building 3D Hometown Diorama...</span>
         </div>
       </div>
     );
@@ -347,8 +360,8 @@ export default function HometownScene() {
     return <WebGLFallback />;
   }
 
-  const cityName = currentLocation?.city || 'Panipat';
-  const activeSlug = currentLocation?.slug?.toLowerCase() || 'panipat';
+  const cityName = currentLocation?.city || 'Hometown';
+  const activeSlug = currentLocation?.slug?.toLowerCase() || 'hometown';
 
   const handleSharePlace = () => {
     if (typeof window !== 'undefined') {
@@ -358,10 +371,13 @@ export default function HometownScene() {
     }
   };
 
+  const sceneKey = `${currentLocation?.latitude}-${currentLocation?.longitude}-${selectedPlace?.id || 'overview'}`;
+
   return (
     <div id="3d-diorama-section" className="space-y-4">
       <div className="relative w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-3xl overflow-hidden bg-gradient-to-b from-[#E2F1F8] via-hub-cream to-[#F4EFE6] dark:from-[#202A24] dark:via-[#18201C] dark:to-[#27322B] border border-hub-border shadow-md">
-        <Canvas camera={{ position: [0, 5, 8], fov: 45 }}>
+        {/* DYNAMIC SCENE CANVAS */}
+        <Canvas key={sceneKey} camera={{ position: [0, 5, 8], fov: 45 }}>
           <HometownSceneContent
             landmarks={realLandmarks}
             selectedPlace={selectedPlace}
@@ -369,138 +385,65 @@ export default function HometownScene() {
           />
         </Canvas>
 
-        {/* Dynamic Header Badge */}
-        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 dark:bg-[#27322B]/90 border border-hub-border backdrop-blur-md text-xs text-hub-charcoal shadow-sm">
-          <SparklesIcon className="w-3.5 h-3.5 text-hub-terracotta animate-pulse" />
-          <span className="font-semibold text-hub-charcoal">
-            {selectedPlace ? `${selectedPlace.name.toUpperCase()} MINIATURE` : `3D ${cityName} Miniature Diorama`}
-          </span>
-          <span className="text-hub-sage">• Real OpenStreetMap POIs</span>
+        {/* DIORAMA OVERLAY HEADER BADGE */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+          <div className="px-3.5 py-1.5 rounded-2xl bg-white/90 dark:bg-[#27322B]/90 backdrop-blur-md border border-hub-border shadow-sm flex items-center gap-2 text-xs font-semibold text-hub-charcoal pointer-events-auto">
+            <Sparkles className="w-4 h-4 text-hub-terracotta" />
+            <span className="font-mono font-bold tracking-tight uppercase">
+              {selectedPlace ? `3D ${selectedPlace.name.toUpperCase()} MINIATURE` : `3D ${cityName.toUpperCase()} MINIATURE DIORAMA`}
+            </span>
+            {isLoadingPoi && <span className="text-[10px] text-hub-terracotta animate-pulse font-mono">(Syncing POIs...)</span>}
+          </div>
+
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {selectedPlace && (
+              <button
+                onClick={() => setSelectedPlace(null)}
+                className="px-3 py-1.5 rounded-2xl bg-hub-terracotta text-white font-bold text-xs shadow-sm hover:bg-hub-terracottaDark flex items-center gap-1.5 min-h-[36px]"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Back to City Miniature</span>
+              </button>
+            )}
+            <button
+              onClick={handleSharePlace}
+              className="p-2 rounded-2xl bg-white/90 dark:bg-[#27322B]/90 backdrop-blur-md border border-hub-border text-hub-sage hover:text-hub-charcoal shadow-sm min-h-[36px] min-w-[36px] flex items-center justify-center"
+              title="Share 3D View Link"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Back to City Button when a Place is Selected */}
-        {selectedPlace && (
-          <button
-            onClick={() => setSelectedPlace(null)}
-            className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-full bg-hub-terracotta text-white font-bold text-xs shadow-md flex items-center gap-1.5 hover:bg-hub-terracottaDark transition-all"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to {cityName} Miniature</span>
-          </button>
-        )}
-
-        {/* Selected Landmark Modal (for City Overview POI pin clicks) */}
-        {selectedLandmark && !selectedPlace && (
-          <div className="absolute bottom-6 left-6 right-6 z-20 max-w-lg mx-auto p-5 rounded-2xl bg-white/95 dark:bg-[#27322B]/95 border border-hub-border backdrop-blur-xl text-hub-charcoal shadow-xl animate-accordion-down">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <span className="p-2.5 rounded-xl bg-hub-terracotta/10 text-hub-terracotta">
-                  <MapPin className="w-5 h-5" />
-                </span>
-                <div>
-                  <h3 className="font-display font-semibold text-lg text-hub-charcoal">{selectedLandmark.name}</h3>
-                  <span className="text-xs text-hub-terracotta font-mono font-medium">
-                    {selectedLandmark.category}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedLandmark(null)}
-                className="p-1.5 rounded-lg hover:bg-hub-stone text-hub-sage hover:text-hub-charcoal transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="mt-3 text-hub-sage text-sm leading-relaxed">{selectedLandmark.description}</p>
-            
-            <div className="mt-4 pt-3 border-t border-hub-border flex items-center justify-between gap-2">
+        {/* PLACE / LANDMARK DETAIL FLOATING PANEL */}
+        {(selectedPlace || selectedLandmark) && (
+          <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 p-4 rounded-2xl bg-white/95 dark:bg-[#27322B]/95 backdrop-blur-md border border-hub-border shadow-xl space-y-2.5 text-hub-charcoal animate-accordion-down z-10">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-hub-terracotta bg-hub-terracotta/10 px-2 py-0.5 rounded-full uppercase">
+                {selectedPlace?.category || selectedLandmark?.category || 'Heritage Site'}
+              </span>
               <button
                 onClick={() => {
-                  setSelectedPlace({
-                    id: selectedLandmark.id,
-                    name: selectedLandmark.name,
-                    latitude: currentLocation?.latitude || 29.3909,
-                    longitude: currentLocation?.longitude || 76.9635,
-                    category: selectedLandmark.category.toLowerCase(),
-                    description: selectedLandmark.description,
-                  });
+                  setSelectedPlace(null);
                   setSelectedLandmark(null);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-hub-terracotta text-white text-xs font-medium flex items-center gap-1.5"
+                className="text-hub-sage hover:text-hub-charcoal text-xs font-bold"
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Focus 3D Miniature Scene</span>
+                ✕
               </button>
+            </div>
+
+            <div>
+              <h4 className="font-display font-bold text-sm text-hub-charcoal">
+                {selectedPlace?.name || selectedLandmark?.name}
+              </h4>
+              <p className="text-xs text-hub-sage mt-1 leading-relaxed">
+                {selectedPlace?.description || selectedLandmark?.description || `Verified landmark in ${cityName}.`}
+              </p>
             </div>
           </div>
         )}
       </div>
-
-      {/* PLACE INFORMATION PANEL (Rendered when a specific place is selected) */}
-      {selectedPlace && (
-        <div className="p-6 rounded-3xl bg-white dark:bg-[#27322B] border border-hub-border shadow-sm space-y-4 text-hub-charcoal animate-accordion-down">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-hub-terracotta/10 text-hub-terracotta flex items-center justify-center font-bold">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-hub-terracotta/10 text-hub-terracotta text-[11px] font-mono font-bold uppercase border border-hub-terracotta/20">
-                    {selectedPlace.category}
-                  </span>
-                  <span className="text-xs text-hub-sage font-mono">
-                    {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
-                  </span>
-                </div>
-                <h2 className="text-2xl font-display font-semibold text-hub-charcoal mt-1">{selectedPlace.name}</h2>
-                <p className="text-xs text-hub-sage">{selectedPlace.address || `${cityName}, India`}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSharePlace}
-                className="px-3.5 py-2 rounded-xl bg-hub-stone border border-hub-border text-hub-charcoal text-xs font-semibold flex items-center gap-1.5 hover:bg-hub-border"
-              >
-                <Share2 className="w-3.5 h-3.5 text-hub-terracotta" />
-                <span>Share Place</span>
-              </button>
-
-              <button
-                onClick={() => setSelectedPlace(null)}
-                className="px-3.5 py-2 rounded-xl bg-hub-terracotta text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Reset to {cityName} View</span>
-              </button>
-            </div>
-          </div>
-
-          <p className="text-sm text-hub-charcoal leading-relaxed bg-hub-cream dark:bg-[#202A24] p-4 rounded-2xl border border-hub-border">
-            {selectedPlace.description || `Explore digital memories, heritage stories, and community discussions pinned at ${selectedPlace.name}.`}
-          </p>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t border-hub-border">
-            <div className="flex items-center gap-4 text-hub-sage">
-              <span className="flex items-center gap-1 text-hub-terracotta font-semibold">
-                <Heart className="w-4 h-4 fill-hub-terracotta" />
-                Verified Hometown Place
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Link
-                href={`/community/${activeSlug}/memory-map`}
-                className="px-4 py-2 rounded-xl bg-hub-terracotta text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Explore Memories From This Place</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Search, Navigation, X, Home, Briefcase, Sparkles, Check } from 'lucide-react';
-import { useLocationContext, LocationData } from '@/lib/LocationContext';
+import { useLocationContext, LocationData, getCoordinatesForCity } from '@/lib/LocationContext';
 
 interface Props {
   isOpen: boolean;
@@ -10,15 +10,26 @@ interface Props {
 }
 
 export default function LocationEditorModal({ isOpen, onClose }: Props) {
-  const { homeLocation, nowLocation, setHomeLocation, setNowLocation, setLocationData } = useLocationContext();
+  const { homeLocation, nowLocation, setHomeLocation, setNowLocation, setLocationData, refreshProfileLocations } = useLocationContext();
 
-  const [homeCityInput, setHomeCityInput] = useState(homeLocation?.city || '');
-  const [homeStateInput, setHomeStateInput] = useState(homeLocation?.state || '');
-  const [nowCityInput, setNowCityInput] = useState(nowLocation?.city || '');
-  const [nowStateInput, setNowStateInput] = useState(nowLocation?.state || '');
+  const [homeCityInput, setHomeCityInput] = useState('');
+  const [homeStateInput, setHomeStateInput] = useState('');
+  const [nowCityInput, setNowCityInput] = useState('');
+  const [nowStateInput, setNowStateInput] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (homeLocation) {
+      setHomeCityInput(homeLocation.city);
+      setHomeStateInput(homeLocation.state);
+    }
+    if (nowLocation) {
+      setNowCityInput(nowLocation.city);
+      setNowStateInput(nowLocation.state);
+    }
+  }, [homeLocation, nowLocation, isOpen]);
 
   if (!isOpen) return null;
 
@@ -26,8 +37,6 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
           setNowCityInput('My Nearby Location');
           setNowStateInput('Nearby Area');
           setMessage('GPS coordinates captured for current residence!');
@@ -63,7 +72,9 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        // Update local location context immediately
+        const homeCoords = getCoordinatesForCity(homeCityInput);
+        const nowCoords = getCoordinatesForCity(nowCityInput);
+
         const newHomeObj: LocationData = {
           id: `loc-home-${Date.now()}`,
           slug: homeCityInput.toLowerCase().replace(/\s+/g, '-'),
@@ -72,8 +83,8 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
           district: homeCityInput.trim(),
           state: homeStateInput.trim() || 'India',
           country: 'India',
-          latitude: homeLocation?.latitude || 29.3909,
-          longitude: homeLocation?.longitude || 76.9635,
+          latitude: homeCoords.lat,
+          longitude: homeCoords.lng,
           themeAccent: '#E8754F',
         };
 
@@ -85,8 +96,8 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
           district: nowCityInput.trim(),
           state: nowStateInput.trim() || 'India',
           country: 'India',
-          latitude: nowLocation?.latitude || 12.9716,
-          longitude: nowLocation?.longitude || 77.5946,
+          latitude: nowCoords.lat,
+          longitude: nowCoords.lng,
           themeAccent: '#3B82F6',
         };
 
@@ -94,7 +105,9 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
         setNowLocation(newNowObj);
         setLocationData(newHomeObj, 'PROFILE_HOME');
 
-        alert('Your Hometown & Current Residence locations were updated successfully in PostgreSQL!');
+        await refreshProfileLocations();
+
+        alert('Your Hometown & Current Residence locations were saved to PostgreSQL successfully!');
         onClose();
       } else {
         setMessage(data.error || 'Failed to update locations. Please ensure you are logged in.');
@@ -115,7 +128,7 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-display font-semibold text-lg text-hub-charcoal">Edit Your Locations</h3>
+              <h3 className="font-display font-semibold text-lg text-hub-charcoal">Edit Your Profile Locations</h3>
               <p className="text-xs text-hub-sage">Define your Roots (Home) & Current Living City (Now)</p>
             </div>
           </div>
@@ -138,7 +151,7 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Panipat, Jaipur..."
+                  placeholder="e.g. Patna, Amritsar, Jaipur..."
                   value={homeCityInput}
                   onChange={(e) => setHomeCityInput(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#27322B] border border-hub-border text-xs text-hub-charcoal focus:outline-none focus:border-hub-terracotta"
@@ -148,7 +161,7 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
                 <label className="block text-xs font-semibold text-hub-charcoal mb-1">State / Region</label>
                 <input
                   type="text"
-                  placeholder="e.g. Haryana, Rajasthan..."
+                  placeholder="e.g. Bihar, Punjab, Rajasthan..."
                   value={homeStateInput}
                   onChange={(e) => setHomeStateInput(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#27322B] border border-hub-border text-xs text-hub-charcoal focus:outline-none focus:border-hub-terracotta"
@@ -180,7 +193,7 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Bengaluru, Delhi..."
+                  placeholder="e.g. Gurugram, Bengaluru, Delhi..."
                   value={nowCityInput}
                   onChange={(e) => setNowCityInput(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#27322B] border border-hub-border text-xs text-hub-charcoal focus:outline-none focus:border-hub-terracotta"
@@ -190,7 +203,7 @@ export default function LocationEditorModal({ isOpen, onClose }: Props) {
                 <label className="block text-xs font-semibold text-hub-charcoal mb-1">State / Region</label>
                 <input
                   type="text"
-                  placeholder="e.g. Karnataka, Delhi..."
+                  placeholder="e.g. Haryana, Karnataka, Delhi..."
                   value={nowStateInput}
                   onChange={(e) => setNowStateInput(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#27322B] border border-hub-border text-xs text-hub-charcoal focus:outline-none focus:border-hub-terracotta"

@@ -25,6 +25,7 @@ export default function Navbar() {
     currentLocation,
     homeLocation,
     nowLocation,
+    profileLoading,
     setLocationBySlug,
     useMyLocation,
     switchToHome,
@@ -93,11 +94,11 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-hub-cream border border-hub-terracotta/40 hover:border-hub-terracotta text-xs font-semibold text-hub-terracotta flex items-center gap-1.5 shadow-2xs transition-all max-w-[140px] sm:max-w-none truncate"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-hub-cream border border-hub-terracotta/40 hover:border-hub-terracotta text-xs font-semibold text-hub-terracotta flex items-center gap-1.5 shadow-2xs transition-all max-w-[150px] sm:max-w-none truncate"
             >
               <MapPin className="w-3.5 h-3.5 text-hub-terracotta animate-pulse flex-shrink-0" />
               <span className="font-mono truncate">
-                {currentLocation ? `${currentLocation.city}` : 'Select Hometown'}
+                {profileLoading ? 'Loading...' : currentLocation ? `${currentLocation.city}` : 'Select Location'}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-hub-sage flex-shrink-0" />
             </button>
@@ -110,7 +111,7 @@ export default function Navbar() {
                   <Search className="w-3.5 h-3.5 text-hub-sage absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search another location..."
+                    placeholder="Search any location..."
                     value={locationSearchQuery}
                     onChange={(e) => setLocationSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 rounded-xl bg-hub-stone border border-hub-border text-xs text-hub-charcoal focus:outline-none focus:border-hub-terracotta"
@@ -135,7 +136,7 @@ export default function Navbar() {
                 {/* HOME ↔ NOW Quick Toggle */}
                 <div className="p-3 rounded-xl bg-hub-stone border border-hub-border space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-hub-sage uppercase tracking-wider font-semibold">Your Saved Places</span>
+                    <span className="text-[10px] font-mono text-hub-sage uppercase tracking-wider font-semibold">Your Profile Places</span>
                     <button
                       onClick={() => {
                         setIsLocationDropdownOpen(false);
@@ -153,10 +154,15 @@ export default function Navbar() {
                         switchToHome();
                         setIsLocationDropdownOpen(false);
                       }}
-                      className="p-2 rounded-lg bg-hub-terracotta/10 hover:bg-hub-terracotta/20 border border-hub-terracotta/30 text-hub-terracotta text-xs font-semibold flex items-center gap-1.5 truncate min-h-[40px]"
+                      disabled={!homeLocation}
+                      className={`p-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 truncate min-h-[40px] ${
+                        homeLocation
+                          ? 'bg-hub-terracotta/10 hover:bg-hub-terracotta/20 border border-hub-terracotta/30 text-hub-terracotta'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
                     >
                       <Home className="w-3.5 h-3.5 text-hub-terracotta flex-shrink-0" />
-                      <span className="truncate">HOME ({homeLocation ? homeLocation.city : 'Panipat'})</span>
+                      <span className="truncate">HOME ({homeLocation ? homeLocation.city : 'Set Home'})</span>
                     </button>
 
                     <button
@@ -164,10 +170,15 @@ export default function Navbar() {
                         switchToNow();
                         setIsLocationDropdownOpen(false);
                       }}
-                      className="p-2 rounded-lg bg-hub-sky/20 hover:bg-hub-sky/30 border border-hub-sky/40 text-hub-charcoal text-xs font-semibold flex items-center gap-1.5 truncate min-h-[40px]"
+                      disabled={!nowLocation}
+                      className={`p-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 truncate min-h-[40px] ${
+                        nowLocation
+                          ? 'bg-hub-sky/20 hover:bg-hub-sky/30 border border-hub-sky/40 text-hub-charcoal'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
                     >
                       <Briefcase className="w-3.5 h-3.5 text-hub-sky flex-shrink-0" />
-                      <span className="truncate">NOW ({nowLocation ? nowLocation.city : 'Bengaluru'})</span>
+                      <span className="truncate">NOW ({nowLocation ? nowLocation.city : 'Set Now'})</span>
                     </button>
                   </div>
                 </div>

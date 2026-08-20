@@ -13,7 +13,7 @@ export default function HomePage() {
   const { currentLocation, useMyLocation, setLocationBySlug } = useLocationContext();
   const [searchCityInput, setSearchCityInput] = useState('');
 
-  const activeCity = currentLocation?.city || 'Panipat';
+  const activeCity = currentLocation?.city || 'Hometown';
 
   const handleSearchCitySubmit = (e: React.FormEvent) => {
     e.preventDefault();
