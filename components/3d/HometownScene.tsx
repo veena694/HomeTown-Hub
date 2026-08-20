@@ -369,6 +369,18 @@ export default function HometownScene() {
       controller.abort();
     };
   }, [currentLocation]);
+  // CRITICAL: MUST EXECUTE BEFORE ANY CONDITIONAL RETURNS (Rules of Hooks)
+  const isPlaceInActiveCity = React.useMemo(() => {
+    if (!selectedPlace || !currentLocation) return false;
+    if (selectedPlace.latitude && selectedPlace.longitude) {
+      const dLat = Math.abs(selectedPlace.latitude - currentLocation.latitude);
+      const dLng = Math.abs(selectedPlace.longitude - currentLocation.longitude);
+      return dLat < 0.5 && dLng < 0.5;
+    }
+    return true;
+  }, [selectedPlace, currentLocation]);
+
+  const validSelectedPlace = isPlaceInActiveCity ? selectedPlace : null;
 
   if (!isMounted) {
     return (
@@ -387,19 +399,6 @@ export default function HometownScene() {
 
   const cityName = currentLocation?.city || 'Hometown';
   const activeSlug = currentLocation?.slug?.toLowerCase() || 'hometown';
-
-  // Geographic safety validation: Ensure selectedPlace belongs to the active location (within ~50km radius)
-  const isPlaceInActiveCity = React.useMemo(() => {
-    if (!selectedPlace || !currentLocation) return false;
-    if (selectedPlace.latitude && selectedPlace.longitude) {
-      const dLat = Math.abs(selectedPlace.latitude - currentLocation.latitude);
-      const dLng = Math.abs(selectedPlace.longitude - currentLocation.longitude);
-      return dLat < 0.5 && dLng < 0.5;
-    }
-    return true;
-  }, [selectedPlace, currentLocation]);
-
-  const validSelectedPlace = isPlaceInActiveCity ? selectedPlace : null;
 
   const handleSharePlace = () => {
     if (typeof window !== 'undefined') {
