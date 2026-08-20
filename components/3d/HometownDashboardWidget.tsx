@@ -47,7 +47,7 @@ export default function HometownDashboardWidget({ hometownName }: { hometownName
     }
   }, []);
 
-  const activeName = hometownName || currentLocation?.city || 'Panipat';
+  const activeName = hometownName || currentLocation?.city || 'Hometown';
 
   return (
     <div className="relative w-full h-[220px] rounded-2xl bg-gradient-to-br from-hub-cream to-hub-stone border border-hub-border p-4 flex flex-col justify-between overflow-hidden shadow-sm">

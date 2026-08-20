@@ -10,7 +10,7 @@ export default function CommunitiesPage() {
   const [communities, setCommunities] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const activeCity = currentLocation?.city || 'Panipat';
+  const activeCity = currentLocation?.city || 'Hometown';
 
   useEffect(() => {
     fetch(`/api/communities?search=${encodeURIComponent(searchQuery)}`)

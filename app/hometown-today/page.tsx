@@ -12,8 +12,8 @@ export default function HometownTodayPage() {
   const [memories, setMemories] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
 
-  const activeCity = currentLocation?.city || 'Panipat';
-  const activeSlug = currentLocation?.slug || 'panipat';
+  const activeCity = currentLocation?.city || 'Hometown';
+  const activeSlug = currentLocation?.slug || 'hometown';
 
   useEffect(() => {
     fetch(`/api/events?communitySlug=${activeSlug}`)

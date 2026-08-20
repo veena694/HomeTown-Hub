@@ -1,46 +1,47 @@
 'use client';
 
 import React from 'react';
-import { MapPin, Sparkles, Compass } from 'lucide-react';
+import { MapPin, Sparkles, Compass, ArrowRight } from 'lucide-react';
 import { useLocationContext } from '@/lib/LocationContext';
 import Link from 'next/link';
 
 export default function WebGLFallback() {
   const { currentLocation } = useLocationContext();
-  const cityName = currentLocation?.city || 'Panipat';
+  const cityName = currentLocation?.city || 'Hometown';
+  const activeSlug = currentLocation?.slug || 'hometown';
 
   return (
-    <div className="relative w-full h-[520px] rounded-3xl overflow-hidden bg-gradient-to-b from-hub-cream via-hub-stone to-[#EBF4EC] border border-hub-border p-6 flex flex-col justify-between shadow-sm">
-      <div className="flex items-center justify-between z-10">
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-hub-border text-xs text-hub-charcoal">
-          <Compass className="w-3.5 h-3.5 text-hub-terracotta" />
-          <span className="font-semibold">{cityName} Illustrated Hometown View</span>
-        </div>
-        <span className="text-xs px-3 py-1 rounded-full bg-hub-terracotta/10 text-hub-terracotta border border-hub-terracotta/30 font-medium">
-          Simplified Diorama Mode
-        </span>
+    <div className="w-full h-[520px] rounded-3xl bg-gradient-to-b from-hub-cream via-hub-stone to-hub-ivory border border-hub-border p-8 flex flex-col items-center justify-center text-center space-y-6 text-hub-charcoal">
+      <div className="w-20 h-20 rounded-3xl bg-hub-terracotta/10 text-hub-terracotta flex items-center justify-center font-bold shadow-sm">
+        <Compass className="w-10 h-10 animate-spin" />
       </div>
 
-      <div className="my-auto text-center space-y-3 max-w-md mx-auto z-10">
-        <div className="w-16 h-16 rounded-full bg-hub-terracotta/10 border border-hub-terracotta/30 flex items-center justify-center text-hub-terracotta mx-auto">
-          <MapPin className="w-8 h-8" />
+      <div className="space-y-2 max-w-md">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-hub-terracotta/10 text-hub-terracotta text-xs font-mono font-bold">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Interactive 2D Landmark View</span>
         </div>
-        <h3 className="text-2xl font-display font-semibold text-hub-charcoal">Welcome to {cityName}</h3>
-        <p className="text-sm text-hub-sage">
-          Explore historical landmarks, oral heritage, and community memories pinned across {cityName}.
+        <h3 className="font-display font-bold text-2xl text-hub-charcoal">{cityName} Hometown Scene</h3>
+        <p className="text-xs text-hub-sage leading-relaxed">
+          WebGL preview is currently resting. Explore {cityName}’s real OpenStreetMap heritage landmarks, oral histories, and community map pins.
         </p>
-        <Link
-          href={`/community/${currentLocation?.slug || 'panipat'}/memory-map`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-hub-terracotta hover:bg-hub-terracottaDark text-white text-xs font-semibold shadow-md transition-all"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Open Hometown Memory Map™</span>
-        </Link>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-hub-sage border-t border-hub-border pt-4 z-10">
-        <span>Simplified layout active for performance</span>
-        <span className="font-mono text-hub-terracotta font-medium">WebGL 2D Render</span>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href={`/community/${activeSlug}`}
+          className="px-5 py-2.5 rounded-xl bg-hub-terracotta hover:bg-hub-terracottaDark text-white text-xs font-bold shadow-sm flex items-center gap-2"
+        >
+          <span>Explore {cityName} Community</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <Link
+          href={`/community/${activeSlug}/memory-map`}
+          className="px-5 py-2.5 rounded-xl bg-white border border-hub-border text-hub-charcoal text-xs font-semibold hover:border-hub-terracotta flex items-center gap-2"
+        >
+          <MapPin className="w-4 h-4 text-hub-terracotta" />
+          <span>Open Scrapbook Map</span>
+        </Link>
       </div>
     </div>
   );

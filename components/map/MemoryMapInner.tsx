@@ -79,7 +79,7 @@ export default function MemoryMapInner({ initialMemories, communitySlug }: Props
   const [isUploading, setIsUploading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
 
-  const activeCity = currentLocation?.city || 'Panipat';
+  const activeCity = currentLocation?.city || 'Hometown';
   const activeSlug = currentLocation?.slug.toLowerCase() || communitySlug.toLowerCase();
   const centerLat = currentLocation?.latitude || 29.3909;
   const centerLng = currentLocation?.longitude || 76.9635;

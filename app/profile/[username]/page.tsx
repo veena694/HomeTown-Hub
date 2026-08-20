@@ -25,7 +25,7 @@ export default function ProfilePage({ params }: { params: { username: string } }
           setUser(data.user);
           setEditName(data.user.name || '');
           setEditBio(data.user.profile?.bio || '');
-          setEditHometown(data.user.profile?.hometownCity || 'Panipat');
+          setEditHometown(data.user.profile?.hometownCity || 'Hometown');
           setEditCurrentCity(data.user.profile?.currentCity || 'Delhi');
           setEditProfession(data.user.profile?.profession || '');
           setEditSchool(data.user.profile?.school || '');
@@ -120,7 +120,7 @@ export default function ProfilePage({ params }: { params: { username: string } }
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-hub-charcoal">
           <div className="p-3.5 rounded-2xl bg-white border border-hub-border flex items-center gap-2">
             <MapPin className="w-4 h-4 text-hub-terracotta" />
-            <span>Hometown Roots: <strong>{p.hometownCity || 'Panipat'}</strong></span>
+            <span>Hometown Roots: <strong>{p.hometownCity || 'Hometown'}</strong></span>
           </div>
           <div className="p-3.5 rounded-2xl bg-white border border-hub-border flex items-center gap-2">
             <MapPin className="w-4 h-4 text-hub-sage" />

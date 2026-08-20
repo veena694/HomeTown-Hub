@@ -439,7 +439,7 @@ export default function ChatPage() {
                 >
                   <div>
                     <div className="font-semibold text-hub-charcoal">{u.name}</div>
-                    <div className="text-[11px] text-hub-sage">Roots in {u.profile?.hometownCity || 'Panipat'}</div>
+                    <div className="text-[11px] text-hub-sage">Roots in {u.profile?.hometownCity || 'Hometown'}</div>
                   </div>
                   <span className="px-3 py-1 rounded-xl bg-hub-terracotta text-white font-bold text-[10px]">Chat</span>
                 </button>
