@@ -85,21 +85,30 @@ export default function MemoryMapInner({ initialMemories, communitySlug }: Props
   const centerLng = currentLocation?.longitude || 76.9635;
 
   useEffect(() => {
-    fetch(`/api/memories?communitySlug=${activeSlug}`)
+    // 1. Immediately reset memories state & active memory when active location changes
+    setMemories([]);
+    setActiveMemory(null);
+
+    // 2. Fetch location-bound memories using both slug and coordinates
+    fetch(`/api/memories?communitySlug=${activeSlug}&lat=${centerLat}&lng=${centerLng}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.memories && data.memories.length > 0) {
+        if (data.memories) {
           setMemories(data.memories);
+        } else {
+          setMemories([]);
         }
       })
-      .catch(() => {});
-  }, [activeSlug]);
+      .catch(() => {
+        setMemories([]);
+      });
+  }, [activeSlug, centerLat, centerLng]);
 
   const filteredMemories = memories.filter((m) => {
     const isMatchingCity =
       m.communitySlug.toLowerCase() === activeSlug ||
       m.address.toLowerCase().includes(activeCity.toLowerCase()) ||
-      activeSlug === 'current-location';
+      (Math.abs(m.latitude - centerLat) < 0.5 && Math.abs(m.longitude - centerLng) < 0.5);
     const categoryMatch = selectedCategory === 'ALL' || m.category === selectedCategory;
     const yearMatch = m.year <= yearFilter;
     const searchMatch = !searchQuery || m.title.toLowerCase().includes(searchQuery.toLowerCase()) || m.story.toLowerCase().includes(searchQuery.toLowerCase());

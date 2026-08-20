@@ -363,15 +363,28 @@ export default function HometownScene() {
   const cityName = currentLocation?.city || 'Hometown';
   const activeSlug = currentLocation?.slug?.toLowerCase() || 'hometown';
 
+  // Geographic safety validation: Ensure selectedPlace belongs to the active location (within ~50km radius)
+  const isPlaceInActiveCity = React.useMemo(() => {
+    if (!selectedPlace || !currentLocation) return false;
+    if (selectedPlace.latitude && selectedPlace.longitude) {
+      const dLat = Math.abs(selectedPlace.latitude - currentLocation.latitude);
+      const dLng = Math.abs(selectedPlace.longitude - currentLocation.longitude);
+      return dLat < 0.5 && dLng < 0.5;
+    }
+    return true;
+  }, [selectedPlace, currentLocation]);
+
+  const validSelectedPlace = isPlaceInActiveCity ? selectedPlace : null;
+
   const handleSharePlace = () => {
     if (typeof window !== 'undefined') {
-      const url = `${window.location.origin}/?location=${activeSlug}${selectedPlace ? `&place=${encodeURIComponent(selectedPlace.name)}` : ''}`;
+      const url = `${window.location.origin}/?location=${activeSlug}${validSelectedPlace ? `&place=${encodeURIComponent(validSelectedPlace.name)}` : ''}`;
       navigator.clipboard.writeText(url);
       alert(`Shareable link copied to clipboard:\n${url}`);
     }
   };
 
-  const sceneKey = `${currentLocation?.latitude}-${currentLocation?.longitude}-${selectedPlace?.id || 'overview'}`;
+  const sceneKey = `${currentLocation?.latitude}-${currentLocation?.longitude}-${validSelectedPlace?.id || 'overview'}`;
 
   return (
     <div id="3d-diorama-section" className="space-y-4">
@@ -380,7 +393,7 @@ export default function HometownScene() {
         <Canvas key={sceneKey} camera={{ position: [0, 5, 8], fov: 45 }}>
           <HometownSceneContent
             landmarks={realLandmarks}
-            selectedPlace={selectedPlace}
+            selectedPlace={validSelectedPlace}
             onSelectLandmark={(lm) => setSelectedLandmark(lm)}
           />
         </Canvas>
@@ -390,7 +403,7 @@ export default function HometownScene() {
           <div className="px-3.5 py-1.5 rounded-2xl bg-white/90 dark:bg-[#27322B]/90 backdrop-blur-md border border-hub-border shadow-sm flex items-center gap-2 text-xs font-semibold text-hub-charcoal pointer-events-auto">
             <Sparkles className="w-4 h-4 text-hub-terracotta" />
             <span className="font-mono font-bold tracking-tight uppercase">
-              {selectedPlace ? `3D ${selectedPlace.name.toUpperCase()} MINIATURE` : `3D ${cityName.toUpperCase()} MINIATURE DIORAMA`}
+              {validSelectedPlace ? `3D ${validSelectedPlace.name.toUpperCase()} MINIATURE` : `3D ${cityName.toUpperCase()} MINIATURE DIORAMA`}
             </span>
             {isLoadingPoi && <span className="text-[10px] text-hub-terracotta animate-pulse font-mono">(Syncing POIs...)</span>}
           </div>
@@ -416,11 +429,11 @@ export default function HometownScene() {
         </div>
 
         {/* PLACE / LANDMARK DETAIL FLOATING PANEL */}
-        {(selectedPlace || selectedLandmark) && (
+        {(validSelectedPlace || selectedLandmark) && (
           <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 p-4 rounded-2xl bg-white/95 dark:bg-[#27322B]/95 backdrop-blur-md border border-hub-border shadow-xl space-y-2.5 text-hub-charcoal animate-accordion-down z-10">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono font-bold text-hub-terracotta bg-hub-terracotta/10 px-2 py-0.5 rounded-full uppercase">
-                {selectedPlace?.category || selectedLandmark?.category || 'Heritage Site'}
+                {validSelectedPlace?.category || selectedLandmark?.category || 'Heritage Site'}
               </span>
               <button
                 onClick={() => {
@@ -435,10 +448,10 @@ export default function HometownScene() {
 
             <div>
               <h4 className="font-display font-bold text-sm text-hub-charcoal">
-                {selectedPlace?.name || selectedLandmark?.name}
+                {validSelectedPlace?.name || selectedLandmark?.name}
               </h4>
               <p className="text-xs text-hub-sage mt-1 leading-relaxed">
-                {selectedPlace?.description || selectedLandmark?.description || `Verified landmark in ${cityName}.`}
+                {validSelectedPlace?.description || selectedLandmark?.description || `Verified landmark in ${cityName}.`}
               </p>
             </div>
           </div>

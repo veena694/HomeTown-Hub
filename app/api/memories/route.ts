@@ -4,20 +4,46 @@ import { getSessionUser } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const communitySlug = searchParams.get('communitySlug') || 'panipat';
+  const communitySlug = (searchParams.get('communitySlug') || 'panipat').toLowerCase();
   const category = searchParams.get('category');
   const search = searchParams.get('search');
+  const latStr = searchParams.get('lat');
+  const lngStr = searchParams.get('lng');
 
   try {
     const community = await prisma.community.findUnique({ where: { slug: communitySlug } });
 
+    let whereClause: any = {
+      status: 'APPROVED',
+      ...(category && category !== 'ALL' ? { category: category as any } : {}),
+      ...(search ? { title: { contains: search, mode: 'insensitive' } } : {}),
+    };
+
+    if (community) {
+      whereClause.communityId = community.id;
+    } else {
+      // If no explicit community record exists for this city slug (e.g. Patna, Gurugram, Delhi),
+      // match memories by address/title/city containing the requested location name,
+      // or by geographic coordinates if provided.
+      const cityName = communitySlug.split('-')[0];
+      if (latStr && lngStr) {
+        const lat = parseFloat(latStr);
+        const lng = parseFloat(lngStr);
+        whereClause.AND = [
+          { latitude: { gte: lat - 0.5, lte: lat + 0.5 } },
+          { longitude: { gte: lng - 0.5, lte: lng + 0.5 } },
+        ];
+      } else {
+        whereClause.OR = [
+          { address: { contains: cityName, mode: 'insensitive' } },
+          { title: { contains: cityName, mode: 'insensitive' } },
+          { story: { contains: cityName, mode: 'insensitive' } },
+        ];
+      }
+    }
+
     const memories = await prisma.memory.findMany({
-      where: {
-        ...(community ? { communityId: community.id } : {}),
-        status: 'APPROVED',
-        ...(category && category !== 'ALL' ? { category: category as any } : {}),
-        ...(search ? { title: { contains: search, mode: 'insensitive' } } : {}),
-      },
+      where: whereClause,
       include: {
         author: {
           select: { name: true, profile: { select: { avatarUrl: true } } },
@@ -31,7 +57,7 @@ export async function GET(request: Request) {
 
     const formatted = memories.map((m) => ({
       id: m.id,
-      communitySlug,
+      communitySlug: community ? community.slug : communitySlug,
       title: m.title,
       story: m.story,
       category: m.category,
@@ -60,69 +86,70 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Authentication required to post memory' }, { status: 401 });
-  }
-
   try {
-    const body = await request.json();
-    const { communitySlug, title, story, category, year, latitude, longitude, address, imageUrl, thenNowThenUrl, thenNowNowUrl } = body;
-
-    if (!title || !story || !latitude || !longitude) {
-      return NextResponse.json({ error: 'Missing required fields (title, story, latitude, longitude)' }, { status: 400 });
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const community = await prisma.community.findFirst({
-      where: { slug: communitySlug || 'panipat' },
-    });
+    const body = await request.json();
+    const { communitySlug, title, story, category, year, latitude, longitude, address, imageUrl } = body;
+
+    if (!title || !story) {
+      return NextResponse.json({ error: 'Title and story are required' }, { status: 400 });
+    }
+
+    const slug = (communitySlug || 'panipat').toLowerCase();
+    let community = await prisma.community.findUnique({ where: { slug } });
 
     if (!community) {
-      return NextResponse.json({ error: 'Target community not found' }, { status: 404 });
+      // Auto-upsert community for new cities so users can contribute memories to any hometown
+      const cityName = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
+      community = await prisma.community.create({
+        data: {
+          slug,
+          name: `${cityName} Community Hub`,
+          city: cityName,
+          state: 'India',
+          district: cityName,
+          description: `Hometown memories, heritage, and diaspora community for ${cityName}.`,
+          createdById: user.id,
+        },
+      });
     }
 
-    const newMemory = await prisma.memory.create({
+    const memory = await prisma.memory.create({
       data: {
         communityId: community.id,
         authorId: user.id,
         title,
         story,
         category: category || 'HERITAGE',
-        year: parseInt(year) || 2000,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        address: address || 'Community Landmark',
+        year: parseInt(year) || new Date().getFullYear(),
+        latitude: parseFloat(latitude) || 20.0,
+        longitude: parseFloat(longitude) || 75.0,
+        address: address || `${community.city}, India`,
         status: 'APPROVED',
-        media: {
-          create: [
-            ...(imageUrl ? [{ url: imageUrl, caption: title, type: 'PHOTO' }] : []),
-            ...(thenNowThenUrl ? [{ url: thenNowThenUrl, caption: 'Historical Photo', type: 'THEN_NOW_THEN', yearLabel: 'Then' }] : []),
-            ...(thenNowNowUrl ? [{ url: thenNowNowUrl, caption: 'Modern Photo', type: 'THEN_NOW_NOW', yearLabel: 'Now' }] : []),
-          ],
-        },
+        ...(imageUrl
+          ? {
+              media: {
+                create: {
+                  url: imageUrl,
+                  type: 'IMAGE',
+                  caption: title,
+                },
+              },
+            }
+          : {}),
       },
       include: {
         media: true,
       },
     });
 
-    await prisma.notification.create({
-      data: {
-        userId: user.id,
-        type: 'MEMORY_CREATED',
-        title: 'You Preserved a Piece of Home!',
-        message: `Your memory "${title}" has been published to the Hometown Memory Map™.`,
-        link: `/community/${communitySlug || 'panipat'}/memory-map`,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Memory published to Hometown Memory Map™!',
-      memory: newMemory,
-    });
+    return NextResponse.json({ memory });
   } catch (err: any) {
     console.error('Error creating memory:', err);
-    return NextResponse.json({ error: err.message || 'Failed to submit memory' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create memory' }, { status: 500 });
   }
 }
