@@ -16,6 +16,31 @@ interface LandmarkData {
   color: string;
 }
 
+class SceneErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.warn('WebGL 3D Diorama render error, switching to 2D view:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
 // -------------------------------------------------------------
 // LOW-POLY PROCEDURAL MINIATURE MODELS
 // -------------------------------------------------------------
@@ -389,14 +414,16 @@ export default function HometownScene() {
   return (
     <div id="3d-diorama-section" className="space-y-4">
       <div className="relative w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-3xl overflow-hidden bg-gradient-to-b from-[#E2F1F8] via-hub-cream to-[#F4EFE6] dark:from-[#202A24] dark:via-[#18201C] dark:to-[#27322B] border border-hub-border shadow-md">
-        {/* DYNAMIC SCENE CANVAS */}
-        <Canvas key={sceneKey} camera={{ position: [0, 5, 8], fov: 45 }}>
-          <HometownSceneContent
-            landmarks={realLandmarks}
-            selectedPlace={validSelectedPlace}
-            onSelectLandmark={(lm) => setSelectedLandmark(lm)}
-          />
-        </Canvas>
+        {/* DYNAMIC SCENE CANVAS WITH ERROR BOUNDARY */}
+        <SceneErrorBoundary fallback={<WebGLFallback />}>
+          <Canvas key={sceneKey} camera={{ position: [0, 5, 8], fov: 45 }}>
+            <HometownSceneContent
+              landmarks={realLandmarks}
+              selectedPlace={validSelectedPlace}
+              onSelectLandmark={(lm) => setSelectedLandmark(lm)}
+            />
+          </Canvas>
+        </SceneErrorBoundary>
 
         {/* DIORAMA OVERLAY HEADER BADGE */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">

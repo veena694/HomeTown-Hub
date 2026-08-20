@@ -58,7 +58,8 @@ export default function ChatPage() {
     const channel = supabase.channel(`conversation:${activeConvId}`);
 
     channel
-      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+      .on('broadcast', { event: 'new_message' }, (evt: any) => {
+        const payload = evt?.payload;
         if (payload?.message) {
           setMessages((prev) => {
             if (prev.some((m) => m.id === payload.message.id)) return prev;
@@ -66,7 +67,8 @@ export default function ChatPage() {
           });
         }
       })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+      .on('broadcast', { event: 'typing' }, (evt: any) => {
+        const payload = evt?.payload;
         if (payload?.userId !== currentUser?.id) {
           setTypingUser(payload?.isTyping ? payload?.userName : null);
         }
